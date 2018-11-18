@@ -127,6 +127,6 @@ if __name__ == '__main__':
     if(verificar):
         print("Las firmas coinciden")
     else:
-        print("Las hash no coinciden")
+        print("Las firmas no coinciden")
 
 
