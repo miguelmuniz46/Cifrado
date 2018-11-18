@@ -45,7 +45,7 @@ class AESCipher:
                     bloque = entrada.read(self.bs)
 
 class Hash_Cipher:
-    def init(self, file):
+    def __init__(self, file):
         self.file = file
 
     def get_hash(self, save_out=False):
@@ -71,7 +71,7 @@ class RSACipher:
         self.hash = hash
         self.file = file
         self.password = password
-        self.private_key_file = 'clave.bin'
+        self.private_key_file = 'clave.pem'
         self.public_key_file = 'clave.pub'
         self.length_key = 2048
         self.key = RSA.generate(self.length_key)
@@ -84,39 +84,49 @@ class RSACipher:
                 public.write(self.public_key)
 
     def cifrar_RSA(self):
-        key = RSA.import_key(open(self.private_key).read(), passphrase=self.password)
+        key = RSA.import_key(open(self.private_key_file).read(), passphrase=self.password)
 
         sign = PKCS1_v1_5.new(key)
         signature = sign.sign(self.hash)
-        passwd = sign.sign(self.password)
 
-        signature_file = self.file + '.firma'
+        self.signature_file = self.file + '.firma'
 
-        with open(signature_file, 'wb') as output:
-            output.write(signature)
-            output.write()
+        with open(self.signature_file, 'wb') as output:
+                output.write(signature)
 
     def descifrar_RS(self):
-        pass
+        key = RSA.import_key(open(self.public_key_file).read())
 
+        with open(self.signature_file, 'rb') as entrada:
+            firma = entrada.read()
 
+        verificar = PKCS1_v1_5.new(key)
 
-
-
-
-
-
+        if verificar.verify(self.hash, firma):
+            return True
+        else:
+            return False
 
 
 if __name__ == '__main__':
     fichero = "texto"
     passwd = "mysecretpassword"
+    secret_passwd = "othersecretpassword"
 
     my_hash = Hash_Cipher(fichero)
     hash_file = my_hash.get_hash()
-    print(hash_file.hexdigest())
 
     cipher = AESCipher(passwd, fichero)
     cipher.cifrar()
     cipher.descifrar()
+
+    firma = RSACipher(fichero, secret_passwd, hash_file)
+    firma.cifrar_RSA()
+    verificar = firma.descifrar_RS()
+
+    if(verificar):
+        print("Las firmas coinciden")
+    else:
+        print("Las hash no coinciden")
+
 
